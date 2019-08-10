@@ -3,11 +3,31 @@
 const line = require('@line/bot-sdk');
 const express = require('express');
 const config = require('./config.json');
+const books = require('./db');
+// const bodyParser = require('body-parser');
 
 // create LINE SDK client
 const client = new line.Client(config);
 
 const app = express();
+// app.use(bodyParser.json());
+// app.use(bodyParser.urlencoded({ extended: true }));
+
+app.get('/books', (req, res) => {
+  res.json(books);
+});
+
+app.post('/books', (req, res) => {
+  let isBooksNull = false;
+
+  while (!isBooksNull) {
+    if (books !== []) books.pop();
+    else isBooksNull = true;
+  }
+
+  books.push(req.body);
+  res.status(201).json(req.body);
+});
 
 // webhook callback
 app.post('/webhook', line.middleware(config), (req, res) => {
@@ -89,6 +109,10 @@ function handleEvent(event) {
 }
 
 function handleText(message, replyToken) {
+  if (books !== []) books.pop();
+
+  books.push({ 'id': '' + message.text + '' });
+  console.log(books);
   return replyText(replyToken, message.text);
 }
 
